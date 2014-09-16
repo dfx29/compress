@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <strings.h>
 
+//#define DEBUG_MODE
+
 char* data = "aaaaaaaaaabcfsdf";
 
 typedef struct node {
@@ -17,12 +19,18 @@ nodeStructure *getNode(char c, int freq, nodeStructure *l, nodeStructure *r) { /
     n->freq = freq;
     n->l = l;
     n->r = r;
-    printf("node created:%p %c - %d; l: %p, r: %p;\n", n,  ((c != 0)?  c : '^'), freq, l, r);   // DEBUG: NODE CREATION
+#ifdef DEBUG_MODE
+    printf("node created:%p %c - %d; l: %p, r: %p;\n", n,  ((c != 0)?  c : '^'), freq, l, r);
+#endif
     return n;
 }
 
 int cmp(const void* p1, const void* p2) { // qsort comparator for node pointers
+    
+#ifdef DEBUG_MODE
     if(p1 == NULL || p2 == NULL){ printf("\nComparation error!\n"); exit(1); } //DEBUG: COMPFRATOR IN CONFUSION
+#endif
+    
     int fr1 = (*(nodeStructure**)p1)->freq;
     int fr2 = (*(nodeStructure**)p2)->freq;
     return fr1 - fr2;
@@ -95,14 +103,16 @@ int drawTree(nodeStructure* rootNode) {
 
 
 
-int makeCodes(nodeStructure* rootNode) {
+int printCodes(nodeStructure* rootNode) {
 
     static char buff[0xFF];
     
+
     if ((rootNode->l == NULL) != (rootNode->r == NULL)) { // (possible logical XOR?)
-        printf("MUDDLE ELEMENT! - %p\n", rootNode);       // DEBUG CERTAINLY..
+        printf("MUDDLE ELEMENT! - %p\n", rootNode);
         return 1;
     }
+
     
     if (rootNode->l == NULL && rootNode->r == NULL) {    // leaf reached
         if (strlen(buff) == 0) {
@@ -112,10 +122,14 @@ int makeCodes(nodeStructure* rootNode) {
         buff[(strlen(buff) > 0)? strlen(buff) - 1: 0]='\0';
         return 0;
     }
-    buff[strlen(buff)] = '0'; buff[strlen(buff)+1] = '\0'; makeCodes(rootNode->l);
-    buff[strlen(buff)] = '1'; buff[strlen(buff)+1] = '\0'; makeCodes(rootNode->r);
+    buff[strlen(buff)] = '0'; buff[strlen(buff)+1] = '\0'; printCodes(rootNode->l);
+    buff[strlen(buff)] = '1'; buff[strlen(buff)+1] = '\0'; printCodes(rootNode->r);
     buff[(strlen(buff) > 0)? strlen(buff) - 1: 0]='\0';
     
+    return 0;
+}
+
+int makeCodes(nodeStructure* rootNode) {
     return 0;
 }
 
@@ -130,22 +144,33 @@ int main(int argc, char **argv) {
     
     
     int* freq = countChars(data, (int)strlen(data));
+    
+#ifdef DEBUG_MODE
     printInputCharTable(freq);
     puts("");
+#endif
 
     nodeStructure** nodePointers = getFirstNodePointers(freq);
     int len =pointerCounter(nodePointers);
+    
+#ifdef DEBUG_MODE
     printf("\nTotal: %d.\n\n", len);
+#endif
     
     nodeStructure *rootNode = makeTree(nodePointers, len);
+
+#ifdef DEBUG_MODE
     printf("\nrooot %p found.\n", rootNode);
-    
+#endif
+   
+#ifdef DEBUG_MODE
     puts("\nnow backwards...\n");
     drawTree(rootNode);
-    
     puts("\n\ncodes:\n");
+    printCodes(rootNode);
+#endif
+
     makeCodes(rootNode);
   
-    puts("");
     return 0;
 }
