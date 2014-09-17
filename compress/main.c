@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
-//#define DEBUG_MODE
+#define DEBUG_MODE
 
-char* data = "aaaaaaaaaabcfsdf";
+char* data = "This is a simple compressor %).";
 
 typedef struct node {
     char c;
@@ -28,7 +28,7 @@ nodeStructure *getNode(char c, int freq, nodeStructure *l, nodeStructure *r) { /
 int cmp(const void* p1, const void* p2) { // qsort comparator for node pointers
     
 #ifdef DEBUG_MODE
-    if(p1 == NULL || p2 == NULL){ printf("\nComparation error!\n"); exit(1); } //DEBUG: COMPFRATOR IN CONFUSION
+    if(p1 == NULL || p2 == NULL){ printf("\nComparation error!\n"); exit(1); }
 #endif
     
     int fr1 = (*(nodeStructure**)p1)->freq;
@@ -72,7 +72,10 @@ nodeStructure** getFirstNodePointers(int* freq) {
 
 int pointerCounter(nodeStructure** p) {
     int counter;
-    for (counter = 0; p[counter] != NULL; counter++); // WHY NOT (*p)++ ??????!!!!!!!11111111
+    for (counter = 0; *p++ != NULL; counter++); // imbecile!
+#ifdef DEBUG_MODE
+    printf("\n%d NODES\n", counter);
+#endif
     return counter;
 }
 
@@ -122,6 +125,7 @@ int printCodes(nodeStructure* rootNode) {
         buff[(strlen(buff) > 0)? strlen(buff) - 1: 0]='\0';
         return 0;
     }
+    
     buff[strlen(buff)] = '0'; buff[strlen(buff)+1] = '\0'; printCodes(rootNode->l);
     buff[strlen(buff)] = '1'; buff[strlen(buff)+1] = '\0'; printCodes(rootNode->r);
     buff[(strlen(buff) > 0)? strlen(buff) - 1: 0]='\0';
@@ -129,7 +133,37 @@ int printCodes(nodeStructure* rootNode) {
     return 0;
 }
 
-int makeCodes(nodeStructure* rootNode) {
+
+char codes[0xff][0xff];
+
+
+int makeCodes(nodeStructure* rootNode, int depth) {
+    
+    static char buff[0xFF];
+    
+    if (rootNode->l == NULL && rootNode->r == NULL) { // leaf
+        if (depth == 0) { buff[0] = '0'; buff[1] ='\0'; // single
+        } else buff[depth] = '\0';
+    
+    strcpy(codes[rootNode->c], buff);
+    printf("%s - %c\n", buff, rootNode->c);
+    depth--;
+    return depth;
+    }
+    
+    buff[depth] = '0'; makeCodes(rootNode->l, ++depth);  buff[--depth] = '\0';
+    buff[depth] = '1'; makeCodes(rootNode->r, ++depth);  buff[--depth] = '\0';
+    
+    return depth;
+}
+
+
+int bitStreamOut(int length, char* data) {
+    int bitCounter = 0;
+    for (int i = 0; i < length; i++) {
+        bitCounter+=printf("%s", (char*)codes[(char)*data++]);
+    }
+    printf(" - %d bits (nearly %g bytes)", bitCounter, bitCounter/8.);
     return 0;
 }
 
@@ -140,9 +174,7 @@ int makeCodes(nodeStructure* rootNode) {
     *   *   *   *   *   *   *  */
 
 int main(int argc, char **argv) {
-    
-    
-    
+
     int* freq = countChars(data, (int)strlen(data));
     
 #ifdef DEBUG_MODE
@@ -164,13 +196,24 @@ int main(int argc, char **argv) {
 #endif
    
 #ifdef DEBUG_MODE
-    puts("\nnow backwards...\n");
-    drawTree(rootNode);
-    puts("\n\ncodes:\n");
-    printCodes(rootNode);
+//    puts("\nnow backwards...\n");
+//    drawTree(rootNode);
+//    puts("\n\ncodes:\n");
+//    printCodes(rootNode);
 #endif
-
-    makeCodes(rootNode);
+    
+    puts("\ncodes:\n");
+    
+    makeCodes(rootNode, 0);
+    
+//    for(int i = 0; printf("%s\n", (char*)codes[i]), i < 0x100; i++); // it works! 😱
+    
+    puts("");
+    
+    printf("%s - %lu bytes\n", data, strlen(data));
+    bitStreamOut((int)strlen(data), data);
+    
+    puts("");
   
     return 0;
 }
