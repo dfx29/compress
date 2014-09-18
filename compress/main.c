@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define DEBUG_MODE
 
-char* data = "This is a simple compressor %).";
+char* data = "abcddddd";
 
 typedef struct node {
     char c;
@@ -105,7 +106,6 @@ int drawTree(nodeStructure* rootNode) {
 }
 
 
-
 int printCodes(nodeStructure* rootNode) {
 
     static char buff[0xFF];
@@ -158,14 +158,20 @@ int makeCodes(nodeStructure* rootNode, int depth) {
 }
 
 
-int bitStreamOut(int length, char* data) {
-    int bitCounter = 0;
-    for (int i = 0; i < length; i++) {
-        bitCounter+=printf("%s", (char*)codes[(char)*data++]);
+char* bitStreamOut(int length, char* data) {
+    char *out = malloc(length/8 + 1);
+    char tmp = 0;
+    int j;
+    int k = 0;
+    for (int i = 0; i <=length; i++) {
+        j = i % 8;
+        tmp+=((data[j] == '1')? 1 : 0 ) * pow(2,j);
+        if ( j == 0 ) {(out[k++]) = tmp;}
     }
-    printf(" - %d bits (nearly %g bytes)", bitCounter, bitCounter/8.);
-    return 0;
+    return out;
 }
+
+
 
 /*  *   *    ***    *   *   *
     ** **   *   *   *   **  *
